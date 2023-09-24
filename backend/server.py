@@ -27,7 +27,7 @@ def signup():
     users[username] = password  # Almacena la contraseña en texto plano (debes mejorar la seguridad)
 
     return {'message': 'Cuenta creada exitosamente'}, 201
-  
+
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
@@ -38,6 +38,24 @@ def login():
         return {'message': 'Inicio de sesión exitoso'}
     else:
         return {'message': 'Credenciales incorrectas'}, 401
+
+@app.route('/view_users', methods=['GET'])
+def view_users():
+    # Verifica si la solicitud proviene de localhost para seguridad en desarrollo
+    if request.remote_addr != '127.0.0.1':
+        return "Acceso no permitido", 403
+
+    # Obtén la lista de usuarios registrados (solo para fines de depuración)
+    user_list = list(users.keys())
+
+    # Construye una respuesta HTML con la lista de usuarios
+    html_response = "<h1>Lista de Usuarios Registrados</h1>"
+    html_response += "<ul>"
+    for username in user_list:
+        html_response += f"<li>{username}</li>"
+    html_response += "</ul>"
+
+    return html_response
 
 @app.route('/get_data')
 @cross_origin(origin='*')

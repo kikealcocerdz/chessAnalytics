@@ -6,9 +6,13 @@ import DataDisplay from "../components/DataDisplay";
 import SignUpForm from "../components/SignUpForm";
 
 function App() {
+  // Estado para almacenar la información obtenida del servidor
   const [info, setInfo] = useState(null);
+
+  // Estado para almacenar el token de autenticación
   const [token, setToken] = useState(null);
 
+  // Efecto que se ejecuta cuando la aplicación se carga
   useEffect(() => {
     // Realiza la autenticación cuando la aplicación se carga
     const loginData = {
@@ -16,6 +20,7 @@ function App() {
       password: "tu_contraseña",
     };
 
+    // Realiza una solicitud POST al servidor Flask para autenticar al usuario
     fetch("http://localhost:8080/login", {
       method: "POST",
       headers: {
@@ -25,16 +30,19 @@ function App() {
     })
       .then((response) => response.json())
       .then((data) => {
+        // Almacena el token de acceso obtenido del servidor en el estado
         setToken(data.access_token);
       });
   }, []);
 
+  // Manejador para el botón de "Obtener datos"
   const handleLogin = () => {
     if (!token) {
       alert("No estás autenticado. Por favor, inicia sesión.");
       return;
     }
 
+    // Realiza una solicitud GET al servidor Flask para obtener datos
     fetch("http://localhost:8080/get_data", {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -52,13 +60,15 @@ function App() {
       })
       .then((data) => {
         if (data) {
+          // Almacena los datos obtenidos del servidor en el estado
           setInfo(data);
         }
       });
   };
 
+  // Manejador para el formulario de registro
   const handleSignUp = (formData) => {
-    // Realiza la solicitud para crear una cuenta
+    // Realiza una solicitud POST al servidor Flask para crear una cuenta
     fetch("http://localhost:8080/signup", {
       method: "POST",
       headers: {
@@ -82,8 +92,8 @@ function App() {
 
   return (
     <div>
+      {/* Renderiza un formulario de inicio de sesión */}
       <Typography variant="h4">Iniciar Sesión</Typography>
-      <LoginForm onLogin={handleLogin} />
       <Button onClick={handleLogin}>Obtener datos</Button>
       <DataDisplay info={info} />
 
