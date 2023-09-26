@@ -38,7 +38,7 @@ function SignUpForm({ onSignUp }) {
         fullWidth
         margin="normal"
       />
-      <Button variant="contained" color="primary" onClick={handleSubmit}>
+      <Button className="text-3xl border" onClick={handleSubmit}>
         Crear Cuenta
       </Button>
     </div>
