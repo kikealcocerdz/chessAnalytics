@@ -2,6 +2,8 @@ from flask import Flask, request
 from flask_cors import CORS, cross_origin
 import requests
 from cryptography.fernet import Fernet
+import hmac
+import hashlib
 
 app = Flask(__name__)
 CORS(app)
@@ -9,10 +11,8 @@ CORS(app)
 # Genera una clave para cifrar y descifrar las credenciales del usuario
 # Debes almacenar esta clave de manera segura en un entorno de producción
 # Puedes usar una variable de entorno para esto.
-key = Fernet.generate_key()
-fernet = Fernet(key)
 
-users = {}
+users = []
 
 @app.route('/signup', methods=['POST'])
 @cross_origin(origin='*')
@@ -23,8 +23,9 @@ def signup():
 
     if username in users:
         return {'message': 'El usuario ya existe'}, 400
-
-    users[username] = password  # Almacena la contraseña en texto plano (debes mejorar la seguridad)
+    secret_key = Fernet.generate_key()
+    h = hmac.HMAC(secret_key, hashes.SHA256())
+    users[username] = [password,secret_key]  # Almacena la contraseña en texto plano (debes mejorar la seguridad)
 
     return {'message': 'Cuenta creada exitosamente'}, 201
 
@@ -33,9 +34,13 @@ def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
+    secret_pasword=users[username][1]
 
-    if username in users and fernet.decrypt(users[username]) == password.encode():
-        return {'message': 'Inicio de sesión exitoso'}
+    if username not in users:
+        return {'message': 'Usuario no encontrado '}
+
+    if username in users and secret_pasword == password.encode():
+        return {'message': 'Inicio de sesión exitoso'},
     else:
         return {'message': 'Credenciales incorrectas'}, 401
 
