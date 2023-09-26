@@ -23,6 +23,7 @@ def signup():
     password = data.get("password")
 
     if username in users:
+<<<<<<< HEAD
         return {"message": "El usuario ya existe"}, 400
     secret_key = Fernet.generate_key()
     h = hmac.HMAC(secret_key, hashes.SHA256())
@@ -32,11 +33,18 @@ def signup():
     ]  # Almacena la contraseña en texto plano (debes mejorar la seguridad)
 
     return {"message": "Cuenta creada exitosamente"}, 201
+=======
+        return {'message': 'El usuario ya existe'}, 400
+    secret_key = Fernet.generate_key()
+    h = hmac.HMAC(secret_key, hashes.SHA256())
+    users[username] = [password,secret_key]  # Almacena la contraseña en texto plano (debes mejorar la seguridad)
+>>>>>>> e6285427e384f8f75d43e2abc969131bf71a4b30
 
 
 @app.route("/login", methods=["POST"])
 def login():
     data = request.json
+<<<<<<< HEAD
     username = data.get("username")
     password = data.get("password")
     secret_pasword = users[username][1]
@@ -46,6 +54,17 @@ def login():
 
     if username in users and secret_pasword == password.encode():
         return ({"message": "Inicio de sesión exitoso"},)
+=======
+    username = data.get('username')
+    password = data.get('password')
+    secret_pasword=users[username][1]
+
+    if username not in users:
+        return {'message': 'Usuario no encontrado '}
+
+    if username in users and secret_pasword == password.encode():
+        return {'message': 'Inicio de sesión exitoso'},
+>>>>>>> e6285427e384f8f75d43e2abc969131bf71a4b30
     else:
         return {"message": "Credenciales incorrectas"}, 401
 
