@@ -1,10 +1,10 @@
 from flask import Flask, request
-from flask_cors import CORS, cross_origin
-import requests
-from cryptography.fernet import Fernet
-import hmac
 import hashlib
-
+import os
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hmac
 app = Flask(__name__)
 CORS(app)
 
@@ -18,53 +18,46 @@ users = []
 @app.route("/signup", methods=["POST"])
 @cross_origin(origin="*")
 def signup():
+
     data = request.json
     username = data.get("username")
-    password = data.get("password")
-
     if username in users:
-<<<<<<< HEAD
         return {"message": "El usuario ya existe"}, 400
+    password = data.get("password")
+    kdf = PBKDF2HMAC(
+    algorithm=hashes.SHA256(),
+    length=32,
+    salt=salt,
+    iterations=480000,
+)
+    key = kdf.derive(b"password")
     secret_key = Fernet.generate_key()
-    h = hmac.HMAC(secret_key, hashes.SHA256())
-    users[username] = [
-        password,
-        secret_key,
-    ]  # Almacena la contraseña en texto plano (debes mejorar la seguridad)
-
+    users[username] = [key,secret_key,] 
     return {"message": "Cuenta creada exitosamente"}, 201
-=======
-        return {'message': 'El usuario ya existe'}, 400
-    secret_key = Fernet.generate_key()
-    h = hmac.HMAC(secret_key, hashes.SHA256())
-    users[username] = [password,secret_key]  # Almacena la contraseña en texto plano (debes mejorar la seguridad)
->>>>>>> e6285427e384f8f75d43e2abc969131bf71a4b30
+
+
 
 
 @app.route("/login", methods=["POST"])
 def login():
     data = request.json
-<<<<<<< HEAD
     username = data.get("username")
     password = data.get("password")
-    secret_pasword = users[username][1]
+    key = users[username][0]
+    kdf = PBKDF2HMAC(
+    algorithm=hashes.SHA256(),
+    length=32,
+    salt=salt,
+    iterations=480000,
+)
+    derived_key = kdf.derive(password.encode())
+    kdf.verify(b"password", derived_key)
 
     if username not in users:
         return {"message": "Usuario no encontrado "}
 
-    if username in users and secret_pasword == password.encode():
-        return ({"message": "Inicio de sesión exitoso"},)
-=======
-    username = data.get('username')
-    password = data.get('password')
-    secret_pasword=users[username][1]
-
-    if username not in users:
-        return {'message': 'Usuario no encontrado '}
-
-    if username in users and secret_pasword == password.encode():
+    if  kdf.verify(b"password", derived_key):
         return {'message': 'Inicio de sesión exitoso'},
->>>>>>> e6285427e384f8f75d43e2abc969131bf71a4b30
     else:
         return {"message": "Credenciales incorrectas"}, 401
 
@@ -87,15 +80,12 @@ def view_users():
 
     return html_response
 
-
 @app.route("/get_data")
 @cross_origin(origin="*")
 def get_data():
     r = requests.get("http://ergast.com/api/f1/current/last/results.json")
     r = r.json()
     return r
-
-
 # Running app
 if __name__ == "__main__":
     app.run(debug=True, port=8080)
