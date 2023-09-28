@@ -38,9 +38,12 @@ function SignUpForm({ onSignUp }) {
         fullWidth
         margin="normal"
       />
-      <Button className="text-3xl border" onClick={handleSubmit}>
+      <button
+        className="bg-chess-green p-4 rounded-xl text-white"
+        onClick={handleSubmit}
+      >
         Crear Cuenta
-      </Button>
+      </button>
     </div>
   );
 }

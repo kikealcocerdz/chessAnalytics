@@ -10,31 +10,9 @@ function App() {
   const [info, setInfo] = useState(null);
   const [mostrarCrearCuenta, setMostrarCrearCuenta] = useState(false);
   const [mostrarLogin, setMostrarLogin] = useState(true);
+  const [logged, setLogged] = useState(false);
   // Estado para almacenar el token de autenticación
   const [token, setToken] = useState(null);
-
-  // Efecto que se ejecuta cuando la aplicación se carga
-  useEffect(() => {
-    // Realiza la autenticación cuando la aplicación se carga
-    const loginData = {
-      username: "tu_usuario",
-      password: "tu_contraseña",
-    };
-
-    // Realiza una solicitud POST al servidor Flask para autenticar al usuario
-    fetch("http://localhost:8080/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(loginData),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        // Almacena el token de acceso obtenido del servidor en el estado
-        setToken(data.access_token);
-      });
-  }, []);
 
   const handleMostrarCrearCuenta = () => {
     setMostrarCrearCuenta(!mostrarCrearCuenta);
@@ -45,8 +23,9 @@ function App() {
   const handleLogin = () => {
     // Realiza una solicitud GET al servidor Flask para obtener datos
     fetch("http://localhost:8080/login", {
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
     })
       .then((response) => {
@@ -57,13 +36,16 @@ function App() {
           setToken(null);
           return null;
         }
-        return response.json();
-      })
-      .then((data) => {
-        if (data) {
-          // Almacena los datos obtenidos del servidor en el estado
-          setInfo(data);
+        if (response.ok) {
+          // Almacena la información obtenida del servidor en el estado
+          console.log("logeado");
+          setLogged(true);
         }
+      })
+      .catch((error) => {
+        alert(
+          "Hubo un error al iniciar sesión. Por favor, inténtalo más tarde."
+        );
       });
   };
 
@@ -92,33 +74,42 @@ function App() {
   };
 
   return (
-    <div className="bg-chess-green">
-      {mostrarLogin && (
+    <div className="bg-chess-black h-screen flex items-center text-white w-screen font-serif">
+      {logged ? (
         <div>
-          <Typography variant="h4">Iniciar Sesión</Typography>
-          <LoginForm onLogin={handleLogin} />
-          <DataDisplay info={info} />
-          <Button
-            className="bg-chess-brown text-white"
-            variant="contained"
-            onClick={handleMostrarCrearCuenta}
-          >
-            {mostrarCrearCuenta ? "Iniciar Sesión" : "Crear Cuenta"}
-          </Button>
+          <h2 className="text-6xl">BUENOS DIAS CHESS</h2>
         </div>
-      )}
-      {mostrarCrearCuenta && (
-        <div>
-          <Typography variant="h4">Crear Cuenta</Typography>
-          <SignUpForm onSignUp={handleSignUp} />
-          <Button
-            className="bg-chess-brown text-white"
-            variant="contained"
-            onClick={handleMostrarCrearCuenta}
-          >
-            {mostrarCrearCuenta ? "Iniciar Sesión" : "Iniciar Sesión"}
-          </Button>
-        </div>
+      ) : (
+        <>
+          {mostrarLogin && (
+            <div>
+              <h2 className="text-4xl text-center p-5">Iniciar Sesión</h2>
+              <div className="flex flex-col items-center w-screen">
+                <LoginForm onLogin={handleLogin} />
+                <button
+                  className="bg-chess-green p-1 rounded-lg text-white"
+                  onClick={handleMostrarCrearCuenta}
+                >
+                  {mostrarCrearCuenta ? "Iniciar Sesión" : "Crear Cuenta"}
+                </button>
+              </div>
+            </div>
+          )}
+          {mostrarCrearCuenta && (
+            <div>
+              <h2 className="text-4xl text-center p-5">Crea tu cuenta</h2>
+              <div className="flex flex-col items-center w-screen">
+                <SignUpForm onSignUp={handleSignUp} />
+                <button
+                  className="bg-chess-green p-1 rounded-lg text-white max-w-lg"
+                  onClick={handleMostrarCrearCuenta}
+                >
+                  {mostrarCrearCuenta ? "Iniciar Sesión" : "Iniciar Sesión"}
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -20,7 +20,7 @@ function LoginForm({ onLogin }) {
   };
 
   return (
-    <div>
+    <div className="text-white">
       <TextField
         label="Usuario"
         name="username"
@@ -38,9 +38,12 @@ function LoginForm({ onLogin }) {
         fullWidth
         margin="normal"
       />
-      <Button variant="contained" color="primary" onClick={handleSubmit}>
-        Iniciar Sesión
-      </Button>
+      <button
+        className="bg-chess-green p-4 rounded-xl text-white"
+        onClick={handleSubmit}
+      >
+        Iniciar sesión
+      </button>
     </div>
   );
 }
