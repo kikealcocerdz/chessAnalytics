@@ -1,117 +1,146 @@
-import React, { useState, useEffect } from "react";
-import { Button, Typography } from "@mui/material";
-import "./index.css";
-import LoginForm from "../components/LoginForm";
-import DataDisplay from "../components/DataDisplay";
-import SignUpForm from "../components/SignUpForm";
+import { useState } from "react";
+import { Route, Routes } from "react-router-dom";
 
-function App() {
-  // Estado para almacenar la información obtenida del servidor
-  const [info, setInfo] = useState(null);
-  const [mostrarCrearCuenta, setMostrarCrearCuenta] = useState(false);
-  const [mostrarLogin, setMostrarLogin] = useState(true);
-  const [logged, setLogged] = useState(false);
-  // Estado para almacenar el token de autenticación
-  const [token, setToken] = useState(null);
+export function Login({ setToken }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleMostrarCrearCuenta = () => {
-    setMostrarCrearCuenta(!mostrarCrearCuenta);
-    setMostrarLogin(!mostrarLogin);
-  };
+  const handleLogin = async (event) => {
+    event.preventDefault();
 
-  // Manejador para el botón de "Obtener datos"
-  const handleLogin = () => {
-    // Realiza una solicitud GET al servidor Flask para obtener datos
-    fetch("http://localhost:8080/login", {
+    const response = await fetch("http://localhost:8080/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-    })
-      .then((response) => {
-        if (response.status === 401) {
-          alert(
-            "Token de acceso no válido. Por favor, inicia sesión nuevamente."
-          );
-          setToken(null);
-          return null;
-        }
-        if (response.ok) {
-          // Almacena la información obtenida del servidor en el estado
-          console.log("logeado");
-          setLogged(true);
-        }
-      })
-      .catch((error) => {
-        alert(
-          "Hubo un error al iniciar sesión. Por favor, inténtalo más tarde."
-        );
-      });
-  };
+      body: JSON.stringify({ username, password }),
+    });
 
-  // Manejador para el formulario de registro
-  const handleSignUp = (formData) => {
-    // Realiza una solicitud POST al servidor Flask para crear una cuenta
-    fetch("http://localhost:8080/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    })
-      .then((response) => {
-        if (response.ok) {
-          alert("Cuenta creada exitosamente. Ahora puedes iniciar sesión.");
-        } else {
-          alert("Error al crear la cuenta. Por favor, inténtalo nuevamente.");
-        }
-      })
-      .catch((error) => {
-        alert(
-          "Hubo un error al crear la cuenta. Por favor, inténtalo más tarde."
-        );
-      });
+    if (response.ok) {
+      const data = await response.json();
+
+      setToken(data.token);
+    } else {
+      alert("Credenciales inválidas");
+    }
   };
 
   return (
-    <div className="bg-chess-black h-screen flex items-center text-white w-screen font-serif">
-      {logged ? (
-        <div>
-          <h2 className="text-6xl">BUENOS DIAS CHESS</h2>
-        </div>
-      ) : (
-        <>
-          {mostrarLogin && (
-            <div>
-              <h2 className="text-4xl text-center p-5">Iniciar Sesión</h2>
-              <div className="flex flex-col items-center w-screen">
-                <LoginForm onLogin={handleLogin} />
-                <button
-                  className="bg-chess-green p-1 rounded-lg text-white"
-                  onClick={handleMostrarCrearCuenta}
-                >
-                  {mostrarCrearCuenta ? "Iniciar Sesión" : "Crear Cuenta"}
-                </button>
-              </div>
-            </div>
-          )}
-          {mostrarCrearCuenta && (
-            <div>
-              <h2 className="text-4xl text-center p-5">Crea tu cuenta</h2>
-              <div className="flex flex-col items-center w-screen">
-                <SignUpForm onSignUp={handleSignUp} />
-                <button
-                  className="bg-chess-green p-1 rounded-lg text-white max-w-lg"
-                  onClick={handleMostrarCrearCuenta}
-                >
-                  {mostrarCrearCuenta ? "Iniciar Sesión" : "Iniciar Sesión"}
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
+    <div>
+      <h2 className="p-3 text-chess-green text-4xl text-center">
+        Iniciar sesión
+      </h2>
+      <form
+        className="flex flex-col items-center text-center text-white"
+        onSubmit={handleLogin}
+      >
+        <label className="flex flex-col">
+          Nombre de usuario:
+          <input
+            className="text-black"
+            type="text"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+          />
+        </label>
+        <label className="flex flex-col">
+          Contraseña:
+          <input
+            className="text-black"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+        </label>
+        <button className="bg-chess-green p-3 my-3 rounded-xl" type="submit">
+          Iniciar sesión
+        </button>
+      </form>
     </div>
+  );
+}
+
+export function Dashboard() {
+  return (
+    <div>
+      <h2>Bienvenido al dashboard!</h2>
+    </div>
+  );
+}
+
+export function Signup() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSignup = async (event) => {
+    event.preventDefault();
+
+    const response = await fetch("http://localhost:8080/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      alert(data.message);
+    } else {
+      alert("Error al crear la cuenta. Por favor, inténtalo nuevamente.");
+    }
+  };
+
+  return (
+    <div>
+      <h2 className="p-3 text-chess-green text-4xl text-center">
+        Crear cuenta
+      </h2>
+      <form
+        className="flex flex-col items-center text-center text-white"
+        onSubmit={handleSignup}
+      >
+        <label className="flex flex-col">
+          Nombre de usuario:
+          <input
+            className="text-black"
+            type="text"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+          />
+        </label>
+        <label className="flex flex-col">
+          Contraseña:
+          <input
+            className="text-black"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+        </label>
+        <button className="bg-chess-green p-3 my-3 rounded-xl" type="submit">
+          Crear cuenta
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function App() {
+  const [token, setToken] = useState("");
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <div>
+            <Login token={token} />
+            <Signup />
+          </div>
+        }
+      />
+      <Route path="/dashboard" element={<Dashboard />} />
+    </Routes>
   );
 }
 

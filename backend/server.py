@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS, cross_origin
 import hashlib
 import os
-from flask_cors import CORS, cross_origin
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import requests
 
 app = Flask(__name__)
 CORS(app)
@@ -14,12 +15,12 @@ CORS(app)
 # Puedes usar una variable de entorno para esto.
 
 users = {}
+salt = os.urandom(16)
 
 
 @app.route("/signup", methods=["POST"])
 @cross_origin(origin="*")
 def signup():
-    salt = os.urandom(16)
     data = request.json
     username = data.get("username")
     if username in users:
@@ -40,8 +41,8 @@ def signup():
     return {"message": "Cuenta creada exitosamente"}, 201
 
 
-@app.route("/login", methods=["POST"])
-@cross_origin(origin="*")
+@app.route("/login", methods=["GET", "POST"])
+@cross_origin(origin="http://localhost:5173")
 def login():
     data = request.json
     username = data.get("username")
