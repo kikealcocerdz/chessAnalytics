@@ -6,6 +6,24 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import requests
+import jwt
+import datetime
+
+
+# Genera un token JWT para el usuario
+def generate_token(username):
+    # Define la información del token
+    payload = {
+        "sub": username,
+        "iat": datetime.datetime.utcnow(),
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
+    }
+
+    # Genera el token
+    token = jwt.encode(payload, "secret", algorithm="HS256")
+
+    return token
+
 
 app = Flask(__name__)
 CORS(app)
@@ -61,7 +79,7 @@ def login():
     derived_key = kdf.derive(password.encode())
 
     if stored_key == derived_key:
-        return jsonify({"message": "Inicio de sesión exitoso"})
+        return jsonify({"message": "Correct sesion", "token": generate_token(username)})
     else:
         return jsonify({"message": "Credenciales incorrectas"}), 401
 

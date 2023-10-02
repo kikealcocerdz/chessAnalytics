@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { Dashboard } from "../components/Dashboard";
 
-export function Login({ setToken }) {
+export function Login() {
+  const [token, setToken] = useState(""); // [valor, funcion que actualiza el valor
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -18,12 +20,16 @@ export function Login({ setToken }) {
 
     if (response.ok) {
       const data = await response.json();
-
       setToken(data.token);
     } else {
       alert("Credenciales inválidas");
     }
   };
+
+  if (token !== "") {
+    console.log("estas en dashboard");
+    return <Navigate to="/dashboard" />;
+  }
 
   return (
     <div>
@@ -56,14 +62,6 @@ export function Login({ setToken }) {
           Iniciar sesión
         </button>
       </form>
-    </div>
-  );
-}
-
-export function Dashboard() {
-  return (
-    <div>
-      <h2>Bienvenido al dashboard!</h2>
     </div>
   );
 }
@@ -127,14 +125,13 @@ export function Signup() {
 }
 
 function App() {
-  const [token, setToken] = useState("");
   return (
     <Routes>
       <Route
         path="/"
         element={
-          <div>
-            <Login token={token} />
+          <div className="bg-chess-black w-screen h-screen flex flex-col justify-center items-center">
+            <Login />
             <Signup />
           </div>
         }
