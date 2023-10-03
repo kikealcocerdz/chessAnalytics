@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Dashboard } from "../components/Dashboard";
 
-export function Login() {
-  const [token, setToken] = useState(""); // [valor, funcion que actualiza el valor
+export function Login({setToken, token}) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -26,8 +25,7 @@ export function Login() {
     }
   };
 
-  if (token !== "") {
-    console.log("estas en dashboard");
+  if (token) {
     return <Navigate to="/dashboard" />;
   }
 
@@ -125,18 +123,22 @@ export function Signup() {
 }
 
 function App() {
+  const [token, setToken] = useState("");
   return (
     <Routes>
       <Route
         path="/"
         element={
           <div className="bg-chess-black w-screen h-screen flex flex-col justify-center items-center">
-            <Login />
+            <Login setToken={setToken} token={token} /> {/* Pasar setToken como prop */}
             <Signup />
           </div>
         }
       />
-      <Route path="/dashboard" element={<Dashboard />} />
+      <Route
+        path="/dashboard"
+        element={<Dashboard token={token} />}
+      />
     </Routes>
   );
 }
