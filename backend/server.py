@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import requests
 import jwt
 import datetime
+from flask_sqlalchemy import SQLAlchemy
 
 
 # Genera un token JWT para el usuario
@@ -27,13 +28,26 @@ def generate_token(username):
 
 app = Flask(__name__)
 CORS(app)
-
+DB_NAME = "users.db"
+app.config['SECRET_KEY'] = 'secret'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
 # Genera una clave para cifrar y descifrar las credenciales del usuario
 # Debes almacenar esta clave de manera segura en un entorno de producción
 # Puedes usar una variable de entorno para esto.
+db = SQLAlchemy(app)
 
 users = {}
 salt = os.urandom(16)
+
+# Define el modelo de usuario
+
+
+class Users(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(50), nullable=False)
+
+    def __repr__(self):
+        return f"User('{self.username}', '{self.key}', '{self.secret_key}')"
 
 
 @app.route("/signup", methods=["POST"])
@@ -50,7 +64,8 @@ def signup():
         salt=salt,
         iterations=480000,
     )
-    key = kdf.derive(password.encode())  # Corregido para derivar la clave correctamente
+    # Corregido para derivar la clave correctamente
+    key = kdf.derive(password.encode())
     secret_key = Fernet.generate_key()
     users[username] = [
         key,
@@ -108,7 +123,8 @@ def view_users():
 def get_data():
     r = requests.get("http://ergast.com/api/f1/current/last/results.json")
     r = r.json()
-    return jsonify(r)  # Añadida la función 'jsonify' para enviar una respuesta JSON
+    # Añadida la función 'jsonify' para enviar una respuesta JSON
+    return jsonify(r)
 
 
 # Running app
