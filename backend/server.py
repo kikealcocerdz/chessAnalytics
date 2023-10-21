@@ -8,8 +8,17 @@ import jwt
 import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
+import base64
 
-password_system = "1234"
+
+# Generar una clave aleatoria para Fernet
+fernet_key = Fernet.generate_key()
+
+# Crear un objeto Fernet con la clave generada
+fernet_cipher = Fernet(fernet_key)
+
+
+password_system = "abcdeofio"
 
 
 # Genera un token JWT para el usuario
@@ -38,19 +47,20 @@ app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_NAME}"
 # Puedes usar una variable de entorno para esto.
 db = SQLAlchemy(app)
 app.app_context().push()
-users = {}
-salt = os.urandom(16)
-salt2 = os.urandom(16)
+salt_password = os.urandom(16)
+salt_user = os.urandom(16)
 
 
 # Define el modelo de usuario
 class User(db.Model):
     email = db.Column(db.String(120), primary_key=True, nullable=False)
-    key = db.Column(db.String(120), nullable=False)
+    password_hash = db.Column(db.String(120), nullable=False)
     # cifrar con una clave del sistema
     secret_key = db.Column(db.String(120), nullable=False)
+    salt = db.Column(db.String(120), nullable=False)
+    user_chess = db.Column(db.String(120), nullable=False)
 
-    def __repr__(self):
+    def _repr_(self):
         return f"User('{self.username}', '{self.key}', '{self.secret_key}')"
 
 
@@ -63,30 +73,38 @@ def signup():
     data = request.json
     username = data.get("username")
     password = data.get("password")
+    user_chess = data.get("user_chess")
 
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
-        salt=salt,
+        salt=salt_password,
         iterations=480000,
     )
 
     kdf_2 = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
-        salt=salt2,
+        salt=salt_user,
         iterations=480000,
     )
-    # Corregido para derivar la clave correctamente
-    key = kdf.derive(password.encode())
-
-    #
+    key = base64.urlsafe_b64encode(kdf_2.derive(password_system))
+    master_key = kdf_2.derive(key)
+    f = Fernet(master_key)
     secret_key_original = Fernet.generate_key()
-    secret_key = Fernet.encrypt(
-        secret_key_original, kdf_2.derive(password_system, salt2)
-    )
+    f_user = Fernet(secret_key_original)
+    password_encrypted = kdf.derive(password)
+    user_encrypted = f_user.encrypt(user_chess)
+    secret_key_encrypted = f.encrypt(secret_key_original)
 
-    user = User(email=username, key=key, secret_key=secret_key)
+    # Crear un nuevo usuario en la base de datos
+    user = User(
+        email=username,
+        password_hash=password_encrypted,
+        secret_key=secret_key_encrypted,
+        salt=salt_user,
+        user_chess=user_encrypted,
+    )  # faltaria añadir dos columnas a la base de datos que corresponden a user y salt
     db.session.add(user)
     try:
         db.session.commit()
@@ -106,20 +124,22 @@ def login():
     user = User.query.filter_by(email=username).first()
     if user is None:
         return jsonify({"message": "No existe cuenta"}), 401
-    stored_key = user.key
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
-        salt=salt,  # Asegúrate de que 'salt' esté definida en algún lugar
+        salt=salt_user,  # Este salt tiene que ser el salt con el que derivamos la password
         iterations=480000,
     )
-    derived_key = kdf.derive(password.encode())
-    print(stored_key)
+    password_encrypted = kdf.derive(password.encode())
+    f = Fernet(kdf.derive(password_system.encode()))
+    secret_key = f.decrypt(user.secret_key)
+    f_user = Fernet(secret_key)
+    user_decrypted = f_user.decrypt(user.user).decode()
 
-    if derived_key == stored_key:
-        return jsonify({"message": "Correct sesion", "token": generate_token(username)})
+    if user_decrypted == data.get("user_chess"):
+        return {"message": "Inicio de sesión exitoso"}
     else:
-        return jsonify({"message": "Credenciales incorrectas"}), 401
+        return {"message": "Credenciales inválidas"}, 401
 
 
 # Running app

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Dashboard } from "../components/Dashboard";
 
-export function Login({setToken, token}) {
+export function Login({ setToken, token }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -67,6 +67,7 @@ export function Login({setToken, token}) {
 export function Signup() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [user_chess, setUserChess] = useState("");
 
   const handleSignup = async (event) => {
     event.preventDefault();
@@ -76,7 +77,7 @@ export function Signup() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username, password, user_chess }),
     });
 
     if (response.ok) {
@@ -114,6 +115,15 @@ export function Signup() {
             onChange={(event) => setPassword(event.target.value)}
           />
         </label>
+        <label className="flex flex-col">
+          Usuario de Chess.com:
+          <input
+            className="text-black"
+            type="user_chess"
+            value={user_chess}
+            onChange={(event) => setUserChess(event.target.value)}
+          />
+        </label>
         <button className="bg-chess-green p-3 my-3 rounded-xl" type="submit">
           Crear cuenta
         </button>
@@ -130,15 +140,13 @@ function App() {
         path="/"
         element={
           <div className="bg-chess-black w-screen h-screen flex flex-col justify-center items-center">
-            <Login setToken={setToken} token={token} /> {/* Pasar setToken como prop */}
+            <Login setToken={setToken} token={token} />{" "}
+            {/* Pasar setToken como prop */}
             <Signup />
           </div>
         }
       />
-      <Route
-        path="/dashboard"
-        element={<Dashboard token={token} />}
-      />
+      <Route path="/dashboard" element={<Dashboard token={token} />} />
     </Routes>
   );
 }
