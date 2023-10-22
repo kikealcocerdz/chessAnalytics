@@ -1,34 +1,36 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
+import { useEffect } from "react";
 
-export function Dashboard({ token }) {
-  const [username, setUsername] = useState("");
+export function Dashboard({ token, user_chess }) {
   const [chessUsername, setChessUsername] = useState("");
   const [profileImage, setProfileImage] = useState("");
   const [countryImage, setCountry] = useState("");
   let countryId = "";
   let countryCode = "";
   let countryFlag = "";
-  async function handleChessUser(event) {
-    event.preventDefault();
 
-    const response = await fetch(
-      `https://api.chess.com/pub/player/${username}`
-    );
+  useEffect(() => {
+    async function fetchChessUser() {
+      const response = await fetch(
+        `https://api.chess.com/pub/player/${user_chess}`
+      );
 
-    if (response.ok) {
-      const data = await response.json();
-      setChessUsername(data.username);
-      setProfileImage(data.avatar);
-      countryId = data.country;
-      countryCode = countryId.code;
-      countryCode = countryId.slice(-2);
-      countryFlag = `https://flagsapi.com/${countryCode}/flat/64.png`;
-      setCountry(countryFlag);
-    } else {
-      alert("Usuario no encontrado");
+      if (response.ok) {
+        const data = await response.json();
+        setProfileImage(data.avatar);
+        countryId = data.country;
+        countryCode = countryId.code;
+        countryCode = countryId.slice(-2);
+        countryFlag = `https://flagsapi.com/${countryCode}/flat/64.png`;
+        setCountry(countryFlag);
+      } else {
+        alert("Usuario no encontrado");
+      }
     }
-  }
+
+    fetchChessUser();
+  }, []);
 
   const [stats_rapid, setStats_rapid] = useState("");
   const [stats_bullet, setStats_bullet] = useState("");
@@ -39,7 +41,7 @@ export function Dashboard({ token }) {
     event.preventDefault();
 
     const response = await fetch(
-      `https://api.chess.com/pub/player/${username}/stats`
+      `https://api.chess.com/pub/player/${user_chess}/stats`
     );
 
     if (response.ok) {
@@ -61,27 +63,9 @@ export function Dashboard({ token }) {
     <div className="bg-chess-black w-screen h-screen flex flex-col items-center justify-center">
       <div id="pregunta">
         <h2 className="p-3 text-chess-green text-4xl text-center">CHESS.COM</h2>
-        <form
-          className="flex flex-col items-center text-center text-white"
-          onSubmit={handleChessUser}
-        >
-          <label className="flex flex-col">
-            Nombre de usuario de Chess.com:
-            <input
-              className="text-black"
-              type="text"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-            />
-          </label>
-          <button className="bg-chess-green p-3 my-3 rounded-xl" type="submit">
-            Buscar
-          </button>
-        </form>
       </div>
-      {chessUsername && (
         <div className="flex flex-col items-center h-screen w-screen bg-chess-black">
-          <h3 className="text-chess-green">@{chessUsername}</h3>
+          <h3 className="text-chess-green">@{user_chess}</h3>
           <img src={profileImage} alt="Profile" />
           <img src={countryImage} alt="Country" />
           <button
@@ -113,7 +97,6 @@ export function Dashboard({ token }) {
             </div>
           </div>
         </div>
-      )}
     </div>
   );
 }

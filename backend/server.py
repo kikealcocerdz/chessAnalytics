@@ -18,7 +18,7 @@ fernet_key = Fernet.generate_key()
 fernet_cipher = Fernet(fernet_key)
 
 
-password_system = "abcdeofio"
+password_system = b"abcdeofio"
 
 
 # Genera un token JWT para el usuario
@@ -59,6 +59,7 @@ class User(db.Model):
     secret_key = db.Column(db.String(120), nullable=False)
     salt = db.Column(db.String(120), nullable=False)
     user_chess = db.Column(db.String(120), nullable=False)
+    salt_2 = db.Column(db.String(120), nullable=False)
 
     def _repr_(self):
         return f"User('{self.username}', '{self.key}', '{self.secret_key}')"
@@ -88,14 +89,20 @@ def signup():
         salt=salt_user,
         iterations=480000,
     )
-    key = base64.urlsafe_b64encode(kdf_2.derive(password_system))
-    master_key = kdf_2.derive(key)
-    f = Fernet(master_key)
+    # Generamos el fernet con la master key
+    master_key = base64.urlsafe_b64encode(kdf_2.derive(password_system))
+    f_master_key = Fernet(master_key)
+
+    # Generar una clave secreta sin codificar
     secret_key_original = Fernet.generate_key()
+
+    # Cifrar la clave secreta con el fernet de la master key
+    secret_key_encrypted = f_master_key.encrypt(secret_key_original)
+
+    password_encrypted = kdf.derive(password.encode())
+
     f_user = Fernet(secret_key_original)
-    password_encrypted = kdf.derive(password)
-    user_encrypted = f_user.encrypt(user_chess)
-    secret_key_encrypted = f.encrypt(secret_key_original)
+    user_encrypted = f_user.encrypt(user_chess.encode())
 
     # Crear un nuevo usuario en la base de datos
     user = User(
@@ -103,8 +110,10 @@ def signup():
         password_hash=password_encrypted,
         secret_key=secret_key_encrypted,
         salt=salt_user,
+        salt_2=salt_password,
         user_chess=user_encrypted,
-    )  # faltaria añadir dos columnas a la base de datos que corresponden a user y salt
+    )
+    # faltaria añadir dos columnas a la base de datos que corresponden a user y salt
     db.session.add(user)
     try:
         db.session.commit()
@@ -122,24 +131,43 @@ def login():
     username = data.get("username")
     password = data.get("password")
     user = User.query.filter_by(email=username).first()
+    user_password = user.password_hash
+    secret_key = user.secret_key
+    user_chess = user.user_chess
+    salt_password = user.salt_2
+    salt_user = user.salt
     if user is None:
         return jsonify({"message": "No existe cuenta"}), 401
+
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
-        salt=salt_user,  # Este salt tiene que ser el salt con el que derivamos la password
+        salt=salt_password,  # Este salt tiene que ser el salt con el que derivamos la password
         iterations=480000,
     )
-    password_encrypted = kdf.derive(password.encode())
-    f = Fernet(kdf.derive(password_system.encode()))
-    secret_key = f.decrypt(user.secret_key)
-    f_user = Fernet(secret_key)
-    user_decrypted = f_user.decrypt(user.user).decode()
+    kdf_2 = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt_user,
+        iterations=480000,
+    )
 
-    if user_decrypted == data.get("user_chess"):
-        return {"message": "Inicio de sesión exitoso"}
-    else:
-        return {"message": "Credenciales inválidas"}, 401
+    password_encrypted = kdf.derive(password.encode())
+    if user_password != password_encrypted:
+        return jsonify({"message": "No es valida la contraseña"})
+
+    # Para verificar el usuario tenemos que decodificar la clave secreta, por lo que necesitamos la clave del sistema y crear su Fernet
+    master_key = base64.urlsafe_b64encode(kdf_2.derive(password_system))
+    f_master_key = Fernet(master_key)
+    # Esa secret_key se saca de la base de datos
+    secret_key_decrypt = f_master_key.decrypt(secret_key)
+
+    f_user = Fernet(secret_key_decrypt)
+    # Ese user_chess es de la base de datos
+    user_decrypted = f_user.decrypt(user_chess)
+    # Ese user es el que introduce el usuario para acceder a chess.com Con data.get(user)
+    if user_decrypted != user_chess:
+        return jsonify({"message": "El usuario no es válido", "token": generate_token(username), "user_chess": user_decrypted.decode()})
 
 
 # Running app

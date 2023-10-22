@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Dashboard } from "../components/Dashboard";
 
-export function Login({ setToken, token }) {
+export function Login({ setToken, token, setUserChess, user_chess }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -20,6 +20,7 @@ export function Login({ setToken, token }) {
     if (response.ok) {
       const data = await response.json();
       setToken(data.token);
+      setUserChess(data.user_chess);
     } else {
       alert("Credenciales inválidas");
     }
@@ -54,6 +55,15 @@ export function Login({ setToken, token }) {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+          />
+        </label>
+        <label className="flex flex-col">
+          Usuario Chess.com:
+          <input
+            className="text-black"
+            type="text"
+            value={user_chess}
+            onChange={(event) => setUserChess(event.target.value)}
           />
         </label>
         <button className="bg-chess-green p-3 my-3 rounded-xl" type="submit">
@@ -134,19 +144,20 @@ export function Signup() {
 
 function App() {
   const [token, setToken] = useState("");
+  const [user_chess, setUserChess] = useState("");
   return (
     <Routes>
       <Route
         path="/"
         element={
           <div className="bg-chess-black w-screen h-screen flex flex-col justify-center items-center">
-            <Login setToken={setToken} token={token} />{" "}
+            <Login setToken={setToken} setUserChess={setUserChess} user_chess={user_chess} token={token} />{" "}
             {/* Pasar setToken como prop */}
             <Signup />
           </div>
         }
       />
-      <Route path="/dashboard" element={<Dashboard token={token} />} />
+      <Route path="/dashboard" element={<Dashboard token={token} user_chess={user_chess} />} />
     </Routes>
   );
 }
