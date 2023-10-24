@@ -10,10 +10,9 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 import base64
 
-password_system = b"abcdeofio"
-
-
 # Genera un token JWT para el usuario
+
+
 def generate_token(username):
     # Define la información del token
     payload = {
@@ -24,23 +23,20 @@ def generate_token(username):
 
     # Genera el token
     token = jwt.encode(payload, "secret", algorithm="HS256")
-
     return token
 
 
 app = Flask(__name__)
 CORS(app)
 DB_NAME = "users.db"
-# ESTO ESTÁ EN CLARO Y NO DEBERÍA, AÑADIR VARIABLE DE ENTORNO
-app.config["SECRET_KEY"] = "secret"
+# ESTAS CONTRASEÑAS NO DEBERÍAN ESTAR AQUÍ Y DEBEN SER AÑADIDAS COMO VARIABLE DE ENTORNO, PERO AHORA MISMO NO ESTÁ IMPLEMENTADO
+password_system = b"abcdeofio"
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_NAME}"
 # Genera una clave para cifrar y descifrar las credenciales del usuario
 # Debes almacenar esta clave de manera segura en un entorno de producción
 # Puedes usar una variable de entorno para esto.
 db = SQLAlchemy(app)
 app.app_context().push()
-
-
 
 
 # Define el modelo de usuario
@@ -134,7 +130,7 @@ def login():
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
-        salt=salt_password, 
+        salt=salt_password,
         iterations=480000,
     )
     kdf_2 = PBKDF2HMAC(
