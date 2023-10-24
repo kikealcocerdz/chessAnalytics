@@ -70,11 +70,11 @@ def signup():
         salt=salt_password,
         iterations=480000,
     )
-    salt_user = os.urandom(16)
+    salt_master_key = os.urandom(16)
     kdf_2 = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
-        salt=salt_user,
+        salt=salt_master_key,
         iterations=480000,
     )
     # Generamos el fernet con la master key
@@ -97,7 +97,7 @@ def signup():
         email=username,
         password_hash=password_encrypted,
         secret_key=secret_key_encrypted,
-        salt=salt_user,
+        salt=salt_master_key,
         salt_2=salt_password,
         user_chess=user_encrypted,
     )
@@ -123,7 +123,7 @@ def login():
     secret_key = user.secret_key
     user_chess = user.user_chess
     salt_password = user.salt_2
-    salt_user = user.salt
+    salt_master_key = user.salt
     if user is None:
         return jsonify({"message": "No existe cuenta"}), 401
 
@@ -136,7 +136,7 @@ def login():
     kdf_2 = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
-        salt=salt_user,
+        salt=salt_master_key,
         iterations=480000,
     )
 
