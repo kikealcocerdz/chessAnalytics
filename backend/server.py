@@ -10,14 +10,6 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 import base64
 
-
-# Generar una clave aleatoria para Fernet
-fernet_key = Fernet.generate_key()
-
-# Crear un objeto Fernet con la clave generada
-fernet_cipher = Fernet(fernet_key)
-
-
 password_system = b"abcdeofio"
 
 
@@ -47,8 +39,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_NAME}"
 # Puedes usar una variable de entorno para esto.
 db = SQLAlchemy(app)
 app.app_context().push()
-salt_password = os.urandom(16)
-salt_user = os.urandom(16)
+
+
 
 
 # Define el modelo de usuario
@@ -75,14 +67,14 @@ def signup():
     username = data.get("username")
     password = data.get("password")
     user_chess = data.get("user_chess")
-
+    salt_password = os.urandom(16)
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
         salt=salt_password,
         iterations=480000,
     )
-
+    salt_user = os.urandom(16)
     kdf_2 = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
@@ -142,7 +134,7 @@ def login():
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
-        salt=salt_password,  # Este salt tiene que ser el salt con el que derivamos la password
+        salt=salt_password, 
         iterations=480000,
     )
     kdf_2 = PBKDF2HMAC(
