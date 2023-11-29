@@ -36,6 +36,7 @@ export function Dashboard({ token, user_chess }) {
   const [stats_bullet, setStats_bullet] = useState("");
   const [stats_blitz, setStats_blitz] = useState("");
   const [stats_daily, setStats_daily] = useState("");
+  const [buttonHidden, setButtonHidden] = useState(false);
 
   const handleStats = async (event) => {
     event.preventDefault();
@@ -51,11 +52,35 @@ export function Dashboard({ token, user_chess }) {
       setStats_bullet(data.chess_bullet.last.rating);
       setStats_blitz(data.chess_blitz.last.rating);
       setStats_daily(data.chess_daily.last.rating);
+      setButtonHidden(true); // Ocultar el botón después de hacer clic
     } else {
       alert("Usuario no encontrado");
     }
   };
 
+  const handleFirma = async (event) => {
+    event.preventDefault();
+    const response = await fetch("http://localhost:8080/firma", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        stats_blitz,
+        stats_bullet,
+        stats_daily,
+        stats_rapid,
+        user_chess,
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      // Manejar la respuesta de /firma aquí
+    } else {
+      alert("No ha sido posible ejecutar la operación");
+    }
+  };
   // Utiliza el token para hacer solicitudes al servidor
   return !token ? (
     <Navigate to="/" />
@@ -68,12 +93,19 @@ export function Dashboard({ token, user_chess }) {
           <h3 className="text-chess-green">@{user_chess}</h3>
           <img src={profileImage} alt="Profile" />
           <img src={countryImage} alt="Country" />
+          {buttonHidden ?           <button
+            className="bg-chess-green p-3 my-3 rounded-xl"
+            onClick={handleFirma}
+          >
+            Obtener mis puntuaciones firmadas
+          </button> : (
           <button
             className="bg-chess-green p-3 my-3 rounded-xl"
             onClick={handleStats}
           >
             Ver estadísticas
           </button>
+          )}
           <div className="flex flex-col">
             <div className="flex">
               <h3 className="text-chess-green text-4xl p-5">
